@@ -10,10 +10,17 @@
 #include <getopt.h>
 #include <unistd.h> // per close()
 
+#define PORT_SEPARATOR '-'
+
 int vflag; //verbose
 int uflag;	// udp default is tcp
 
 int s = -1; //socket descriptor
+
+struct port_range {
+	int startport;
+	int endport;
+};
 
 void usage() {
 	printf("Usage: simplescan [-uv] host port\n");
@@ -36,11 +43,40 @@ int try_connect(struct sockaddr_in *sa)
 	return 1;
 }
 
+/*
+ * TODO verificare la validitá di portstr
+ */
+void build_port_range(struct port_range *prange, char *portstr) {
+	char *n;
+
+	int sport, eport;
+
+	if ((n = strchr(portstr, PORT_SEPARATOR)) == NULL) {
+		/* Only one port */
+		prange->startport = atoi(portstr);
+		prange->endport = prange->startport;
+	} else {
+		n++; //salta il separatore
+		sport = atoi(portstr);
+		eport = atoi(n);
+
+		if (sport > eport) {
+			prange->startport = eport;
+			prange->endport = sport;
+		} else {
+			prange->startport = sport;
+			prange->endport = eport;
+		}
+	}
+	printf("%d:%d\n", prange->startport, prange->endport);
+}
+
 int main(int argc, char *argv[])
 {
 	int ch;
-	char *host;
+	char *host, *port_str;
 	struct sockaddr_in sock_addr;
+	struct port_range p_range;
 
 	host = "127.0.0.1\0";
 	int port = 1234;
@@ -73,22 +109,29 @@ int main(int argc, char *argv[])
 	if (argv[0] && argv[1]) {
 		//host = argv[0];
 		//port = atoi(argv[1]);
+		host = argv[0];
+		port_str = argv[1];
 		printf("host %s\n", host);
 	} else {
 		usage();
+		return 1;
 	}
 
 	bzero(&sock_addr, sizeof(sock_addr));
 	sock_addr.sin_family = AF_INET;
 	sock_addr.sin_addr.s_addr = inet_addr(host);
 
-	sock_addr.sin_port = htons(port);
+	build_port_range(&p_range, port_str);
 
-	if (try_connect(&sock_addr) == 1) {
-		printf("Port %d is open!\n", port);
-	} else {
-		if (vflag) {
-			printf("Port %d is closed\n", port);
+	for (int p = p_range.startport; p <= p_range.endport; p++) {
+		sock_addr.sin_port = htons(p);
+
+		if (try_connect(&sock_addr) == 1) {
+			printf("Port %d is open!\n", p);
+		} else {
+			if (vflag) {
+				printf("Port %d is closed\n", p);
+			}
 		}
 	}
 
