@@ -23,7 +23,8 @@ struct port_range {
 };
 
 void usage() {
-	printf("Usage: simplescan [-uv] host port\n");
+	printf("Usage: simplescan [-uv] host port\n"
+			"port puó essere una porta o un range di porte(Es. 20-40)\n");
 }
 
 int try_connect(struct sockaddr_in *sa)
@@ -77,9 +78,6 @@ int main(int argc, char *argv[])
 	char *host, *port_str;
 	struct sockaddr_in sock_addr;
 	struct port_range p_range;
-
-	host = "127.0.0.1\0";
-	int port = 1234;
 	/*
 	 * Verbose flag, default enabled
 	 */
