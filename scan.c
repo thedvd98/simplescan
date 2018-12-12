@@ -27,13 +27,30 @@ void usage() {
 			"port puó essere una porta o un range di porte(Es. 20-40)\n");
 }
 
+int udptest(int s) {
+	int ret;
+
+	if (write(s, "A", 1) == 1)
+		ret = 1;
+	else
+		ret = 0;
+	return ret;
+}
+
+/* 1 se la porta é aperta*/
 int try_connect(struct sockaddr_in *sa)
 {
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((s = socket(AF_INET, (uflag ? SOCK_DGRAM : SOCK_STREAM), 0)) < 0) {
 		return -1;
 	}
 
 	if (connect(s, (struct sockaddr *)sa, sizeof(*sa)) < 0) {
+		close(s);
+		return 0;
+	}
+
+	if(uflag && udptest(s)) {
+	} else {
 		close(s);
 		return 0;
 	}
@@ -49,7 +66,6 @@ int try_connect(struct sockaddr_in *sa)
  */
 void build_port_range(struct port_range *prange, char *portstr) {
 	char *n;
-
 	int sport, eport;
 
 	if ((n = strchr(portstr, PORT_SEPARATOR)) == NULL) {
@@ -81,7 +97,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Verbose flag, default enabled
 	 */
-	vflag = 1;
+	vflag = 0;
 	/*
 	 * UDP flag, default disabled
 	 */
