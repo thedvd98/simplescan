@@ -36,8 +36,11 @@ int udptest(int s) {
 		ret = 0;
 	return ret;
 }
-
-/* 1 se la porta é aperta*/
+/*
+ * Verifica lo stato della porta
+ * TODO udp support
+ * 1 se la porta é aperta
+ * */
 int try_connect(struct sockaddr_in *sa)
 {
 	if ((s = socket(AF_INET, (uflag ? SOCK_DGRAM : SOCK_STREAM), 0)) < 0) {
@@ -49,11 +52,6 @@ int try_connect(struct sockaddr_in *sa)
 		return 0;
 	}
 
-	if(uflag && udptest(s)) {
-	} else {
-		close(s);
-		return 0;
-	}
 	close(s);
 	/*
 	 * Porta aperta
